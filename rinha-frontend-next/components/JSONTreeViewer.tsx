@@ -18,20 +18,29 @@ const JSONTreeViewer: React.FC<JSONTreeViewerProps> = ({ data, fileName, size })
             : [...prevKeys, key]
             ));
         };
+        const handleKeyDown = (event: React.KeyboardEvent, key:any) => {
+    
+            if (event.key === 'Enter') {
+                toggleExpand(key);
+            }
+        };
         
     const renderNode = (key: any, value: any, parentKey: string) => {
         const fullKey = parentKey ? `${parentKey}.${key}` : key;
         const isExpanded = expandedKeys.includes(fullKey);
+        
         
 
         if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
             return (
                 <div className="mx-5 py-2" 
                 key={key}
+               
     
                 >
                     <span className="text-gray-400"   
-                     onClick={() => toggleExpand(fullKey)}>
+                     onClick={() => toggleExpand(fullKey)}
+                     role="button" tabIndex={0} onKeyDown={(e)=>handleKeyDown(e,fullKey)} >
                         {key}:
                     </span>
                     {isExpanded && (
@@ -45,19 +54,18 @@ const JSONTreeViewer: React.FC<JSONTreeViewerProps> = ({ data, fileName, size })
 
         if (typeof value === 'object' && Array.isArray(value) && value !== null) {
             return (
-                <div className="mx-5"
+                <div className="mx-5" 
                 key={key}>
-                    <span className="text-[#4e9590]" onClick={() => toggleExpand(fullKey)}>
+                    <span className="text-[#4e9590]" role="button" tabIndex={0} onKeyDown={(e)=>handleKeyDown(e,fullKey)} onClick={() => toggleExpand(fullKey)}>
                         {key}:
                     </span>
-                    {isExpanded && (<>
                         <span className="text-orange-400">[</span>
+                    {isExpanded && (
                             <div className="border-l-2 border-gray-300">
                                 {renderArray(value, fullKey)}
                             </div>
-                        <span className="text-orange-400">]</span>
-                    </>
                     )}
+                    <span className="text-orange-400">]</span>
                 </div>
             );
         } else if (typeof key === 'string' && value !== 'object' && !Array.isArray(value)) {
@@ -81,11 +89,25 @@ const JSONTreeViewer: React.FC<JSONTreeViewerProps> = ({ data, fileName, size })
         );
     };
 
+    const isArraySmall = (array:any[]):any[]|false =>{
+        const threshold = 3000
+    if (Array.isArray(array) && array.length < threshold) {
+        return array;
+    }
+
+    return false;
+    }
+
     const renderArray = (arr: any[], parentKey: string) => {
+    if(isArraySmall(arr)){
         return arr.map((v, i) =>
-            renderNode(i, v, parentKey)
+        renderNode(i, v, parentKey)
         );
-    };
+    }
+    else{
+        console.log('array is too big to render')    
+    }
+    }
     return (
         <div className="flex flex-col max-w-[100vw]">
             <div className='self-center'>
