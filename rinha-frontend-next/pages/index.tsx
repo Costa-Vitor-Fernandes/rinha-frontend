@@ -1,12 +1,8 @@
 import { useState } from 'react';
-import Image from 'next/image'
 import { Inter } from 'next/font/google'
 import JSONTreeViewer from '@/components/JSONTreeViewer';
-import dynamic from 'next/dynamic';
+import { useRef } from 'react';
 
-// const JSONTreeViewer = dynamic(() => import('@/components/JSONTreeViewer'), {
-//   ssr: false,
-// });
 interface CustomFile extends File {
   lastModified: number;
   lastModifiedDate: Date;
@@ -22,10 +18,6 @@ export default function Home() {
   const [jsonData, setJsonData] = useState<any>();
   const [fileDescription, setFileDescription] = useState<CustomFile>()
   const [errorMsg,setErrorMsg] = useState('')
-
-  const logger = (log:any) =>{
-    console.log(JSON.stringify(log),'logger')
-  }
 
   const handleFileUpload = (event:any) => {
     const file = event.target.files[0];
@@ -53,6 +45,14 @@ export default function Home() {
     worker.postMessage(file);
   };
 
+  const fileInputRef = useRef(null);
+
+  const handleLabelClick = () => {
+    if (fileInputRef.current) {
+      //@ts-ignore
+      fileInputRef.current.click()
+    }
+  };
 
   return (
     <main
@@ -65,8 +65,14 @@ export default function Home() {
         <div className='flex min-h-screen flex-col items-center justify-center p-24'>
           <h1 className={`text-4xl ${inter7.className}`}>JSON Tree Viewer</h1>
           <p className={`text-xl ${inter4.className}`}>Simple JSON Viewer that runs completely on-client. No data exchange</p>
-          <label htmlFor="json" className="mt-5 rounded-md border-2 bg-gradient-to-b from-gray-200 to-gray-100 border-zinc-950 px-1 py-2 hover:from-gray-100 focus:bg-gray-50 focus:cursor-pointer hover:cursor-pointer" >Load JSON</label>
-          <input id='json' style={{ visibility: "hidden" }} type='file' accept='.json' onChange={handleFileUpload} />
+          <label htmlFor="json" role='button' tabIndex={0} 
+          onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleLabelClick();
+    }
+  }} className="mt-5 rounded-md border-2 bg-gradient-to-b from-gray-200 to-gray-100 border-zinc-950 px-1 py-2 hover:from-gray-100 focus:bg-gray-50 focus:cursor-pointer hover:cursor-pointer" >Load JSON</label>
+          <input ref={fileInputRef} id='json' style={{ visibility: "hidden" }} type='file' accept='.json' onChange={handleFileUpload} />
           <p className='text-red-500'>{errorMsg}</p>
         </div>
       }
