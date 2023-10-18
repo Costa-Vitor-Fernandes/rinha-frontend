@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Inter } from 'next/font/google'
 import JSONTreeViewer from '@/components/JSONTreeViewer';
 import { useRef } from 'react';
-
+import Head from 'next/head';
 interface CustomFile extends File {
   lastModified: number;
   lastModifiedDate: Date;
@@ -58,6 +58,9 @@ export default function Home() {
     <main
       className={``}
     >
+      <Head>
+        <title>JSON Tree Viewer</title>
+      </Head>
       {jsonData && fileDescription ?
        <JSONTreeViewer fileName={fileDescription.name} size={fileDescription.size} data={jsonData} /> 
 

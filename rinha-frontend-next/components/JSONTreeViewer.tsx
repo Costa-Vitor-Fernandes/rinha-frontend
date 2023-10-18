@@ -1,6 +1,7 @@
 import { inter7 } from "@/pages"
 import { Inter } from 'next/font/google'
 import React, { useState, useEffect, useRef } from 'react';
+import Head from "next/head";
 
 interface JSONTreeViewerProps {
     data: any;
@@ -138,6 +139,9 @@ const JSONTreeViewer: React.FC<JSONTreeViewerProps> = ({ data, fileName, size })
     
     return (
         <div className="flex flex-col min-w-[100vw]">
+            <Head>
+                <title>{fileName}</title>
+            </Head>
             <div className='self-center'>
                 <h1 className={`text-4xl ${inter7.className} py-3 `}>{fileName}</h1>
                 <hr className="py-1"></hr>
