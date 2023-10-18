@@ -1,6 +1,6 @@
 import { inter7 } from "@/pages"
 import { Inter } from 'next/font/google'
-import React,{ useState } from 'react';
+import React,{ useState, useEffect , useRef } from 'react';
 
 interface JSONTreeViewerProps {
     data: any;
@@ -8,20 +8,113 @@ interface JSONTreeViewerProps {
     size: number;
 }
 
-const findLargeArray = (data: any, threshold: number): any[] | null => {
-    if (Array.isArray(data) && data.length > threshold) {
-        return data;
-    }
+const JSONTreeViewer: React.FC<JSONTreeViewerProps> = ({ data, fileName, size }) => {
+    const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
+    
+    const toggleExpand = (key: string) => {
+        setExpandedKeys(prevKeys => (
+            prevKeys.includes(key)
+            ? prevKeys.filter(k => k !== key)
+            : [...prevKeys, key]
+            ));
+        };
+        
+    const renderNode = (key: any, value: any, parentKey: string) => {
+        const fullKey = parentKey ? `${parentKey}.${key}` : key;
+        const isExpanded = expandedKeys.includes(fullKey);
+        
 
-    if (data && typeof data === 'object') {
-        for (const key in data) {
-            const result = findLargeArray(data[key], threshold);
-            if (result) return result;
+        if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+            return (
+                <div className="mx-5 py-2" 
+                key={key}
+    
+                >
+                    <span className="text-gray-400"   
+                     onClick={() => toggleExpand(fullKey)}>
+                        {key}:
+                    </span>
+                    {isExpanded && (
+                        <div className="border-l-2 border-gray-300">
+                            {renderObject(value, fullKey)}
+                        </div>
+                    )}
+                </div>
+            );
         }
-    }
 
-    return null;
+        if (typeof value === 'object' && Array.isArray(value) && value !== null) {
+            return (
+                <div className="mx-5"
+                key={key}>
+                    <span className="text-[#4e9590]" onClick={() => toggleExpand(fullKey)}>
+                        {key}:
+                    </span>
+                    {isExpanded && (<>
+                        <span className="text-orange-400">[</span>
+                            <div className="border-l-2 border-gray-300">
+                                {renderArray(value, fullKey)}
+                            </div>
+                        <span className="text-orange-400">]</span>
+                    </>
+                    )}
+                </div>
+            );
+        } else if (typeof key === 'string' && value !== 'object' && !Array.isArray(value)) {
+            return (
+                <div className="text-[#4e9590] mx-5" key={key}>
+                    {key}: {value === null ? <span className="text-black">null</span> : <span className="text-black">{JSON.stringify(value)}</span>}
+                </div>
+            );
+        } else {
+            return (
+                <div className="text-gray-400 mx-5" key={key}>
+                    {key}: {value === null ? <span className="text-black">null</span> : <span className="text-black">{JSON.stringify(value)}</span>}
+                </div>
+            );
+        }
+    };
+
+    const renderObject = (obj: any, parentKey: string) => {
+        return Object.entries(obj).map(([key, value], index) =>
+            renderNode(key, value, parentKey)
+        );
+    };
+
+    const renderArray = (arr: any[], parentKey: string) => {
+        return arr.map((v, i) =>
+            renderNode(i, v, parentKey)
+        );
+    };
+    return (
+        <div className="flex flex-col max-w-[100vw]">
+            <div className='self-center'>
+                <h1 className={`text-4xl ${inter7.className} py-3 `}>{fileName}</h1>
+                <hr className="py-1"></hr>
+                <div className="max-w-100">
+                    {renderObject(data, '')}
+                </div>
+            </div>
+        </div>
+    );
 };
+
+export default JSONTreeViewer;
+
+// const findLargeArray = (data: any, threshold: number): any[] | null => {
+//     if (Array.isArray(data) && data.length > threshold) {
+//         return data;
+//     }
+
+//     if (data && typeof data === 'object') {
+//         for (const key in data) {
+//             const result = findLargeArray(data[key], threshold);
+//             if (result) return result;
+//         }
+//     }
+
+//     return null;
+// };
 
 // const JSONTreeViewerBIG: React.FC<JSONTreeViewerProps> = ({ data, fileName }) => {
 //     console.log(data)
@@ -99,110 +192,3 @@ const findLargeArray = (data: any, threshold: number): any[] | null => {
 // };
 
 
-
-
-const JSONTreeViewer: React.FC<JSONTreeViewerProps> = ({ data, fileName, size }) => {
-  
-    const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
-
-    const toggleExpand = (key: string) => {
-        setExpandedKeys(prevKeys => ({
-            ...prevKeys,
-            [key]: !prevKeys[key]
-        }));
-    };
-
-    const renderNode = (key: any, value: any) => {
-        const isExpanded = expandedKeys[key];
-
-        if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-            return (
-                <div className="mx-5 py-2" key={key}>
-                    <span className="text-gray-400" onClick={() => toggleExpand(key)}>
-                         {key}:
-                    </span>
-                    {isExpanded && (
-                        <div className="border-l-2 border-gray-300">
-                            {renderObject(value)}
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        if (typeof value === 'object' && Array.isArray(value) && value !== null) {
-            return (
-                <div className="mx-5" key={key}>
-                    <span className="text-[#4e9590]" onClick={() => toggleExpand(key)}>
-                         {key}:
-                    </span>
-                    {isExpanded && (<>
-                        <span className="text-orange-400">[</span>
-                            <div className="border-l-2 border-gray-300">
-                                {renderArray(value)}
-                            </div>
-                        <span className="text-orange-400">]</span>
-                    </>
-                    )}
-                </div>
-            );
-        } else if (typeof key === 'string' && value !== 'object' && !Array.isArray(value)) {
-            return (
-                <div className="text-[#4e9590] mx-5" key={key}>
-                    {key}: {value === null ? <span className="text-black">null</span> : <span className="text-black">{JSON.stringify(value)}</span>}
-                </div>
-            );
-        } else {
-            return (
-                <div className="text-gray-400 mx-5" key={key}>
-                    {key}: {value === null ? <span className="text-black">null</span> : <span className="text-black">{JSON.stringify(value)}</span>}
-                </div>
-            );
-        }
-    };
-
-
-
-
-    const renderObject = (obj: any) => {
-        // console.log(obj, typeof obj)
-        return Object.entries(obj).map(([key, value]) =>
-            // console.log('key:', key, typeof key)
-            // console.log('key:', value, typeof value)
-            renderNode(key, value)
-        );
-    };
-    const renderArray = (arr: any[]):any => {
-        return arr.map((v, i, arr) => {
-            // if (typeof v === 'object' && Array.isArray(v)) {
-            //     console.log('array object', v)
-            //     return renderArray(v)
-            // } 
-            // else {
-                // console.log(i,v,'render node values')
-                return renderNode(i, v)
-            // }
-
-        }
-        )
-
-    }
-
-    // if (size > 3000000) {
-    //     return <JSONTreeViewerBIG fileName={fileName} data={data} size={size} />
-    // }
-    return (
-        <div className="flex flex-col max-w-[100vw]">
-
-            <div className='self-center'>
-                <h1 className={`text-4xl ${inter7.className} py-3 `}>{fileName}</h1>
-                <hr className="py-1"></hr>
-                <div className="max-w-100">
-                    {renderObject(data)}
-                </div>
-            </div>
-        </div>
-    )
-
-}
-export default JSONTreeViewer
