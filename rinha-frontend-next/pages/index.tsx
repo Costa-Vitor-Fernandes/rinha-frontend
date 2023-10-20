@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Inter } from 'next/font/google'
 import JSONTreeViewer from '@/components/JSONTreeViewer';
-import { useRef } from 'react';
+import { ChangeEvent,useRef } from 'react';
 import Head from 'next/head';
 interface CustomFile extends File {
   lastModified: number;
@@ -19,32 +19,44 @@ export default function Home() {
   const [fileDescription, setFileDescription] = useState<CustomFile>()
   const [errorMsg,setErrorMsg] = useState('')
 
-  const handleFileUpload = (event:any) => {
-    const file = event.target.files[0];
-    
-    const worker = new Worker('/fileWorker.js');
+  function isValidJSON(jsonString:string){
+    try {
+      JSON.parse(jsonString);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+  const handleFileUpload = (event:ChangeEvent<HTMLInputElement>) => {
+    if(event.target.files){
 
-    worker.onmessage = (event) => {
-      const { type, jsonData, message } = event.data;
-
-      // console.log(file,'file')
-      if (type === 'success') {
-        // logger(jsonData)
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      
+      reader.onload = () => {
+      const jsonString = reader.result;
+      if(isValidJSON(jsonString as string)){
+        const jsonData = JSON.parse(jsonString as string);
         setFileDescription(file as CustomFile);
         setJsonData(jsonData);
-        setErrorMsg('')
+        // setErrorMsg('');
+        // console.log('valid', reader.readyState)
       } else {
-        setErrorMsg(message)
-        setJsonData(null)
-        // console.error(message);
+        // console.log('invalid', reader.readyState)
+        setErrorMsg("Invalid file. Please load a valid JSON file.");
+        setJsonData(null);
       }
-
-      worker.terminate();
     };
-
-    worker.postMessage(file);
+  
+    reader.onerror = () => {
+      // console.log('error,',reader.readyState)
+      setErrorMsg('Error reading the file');
+      setJsonData(null);
+    };
+    
+    reader.readAsBinaryString(file);
+  }
   };
-
   const fileInputRef = useRef(null);
 
   const handleLabelClick = () => {
